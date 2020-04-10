@@ -52,9 +52,40 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(session({ secret: '71f2a1e93ad87c03', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/photos', photosRouter);
+
+// パスに対する HTTP リクエストのハンドラの登録
+// GitHubへの認証を行うための処理を、GETで /auth/github にアクセスした際に行うというもの。
+app.get('/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] }),
+  function (req, res) {
+  });
+
+// OAuth2.0 の仕組みの中で用いられる、GitHub が利商社の虚に対する問い合わせの結果を送るパス
+//  /auth/github/callback のハンドラを登録
+app.get('/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  function (req, res) {
+    res.redirect('/');
+  });
+
+// /login にGETアクセスがあった時に、login.pugというテンプレートがあることを前提にログインページを描画するコード。
+app.get('/login', function (req, res) {
+  res.render('login');
+});
+
+// /logout にGETでアクセスがあった時にログアウトを実施し、/ のドキュメントルートにリダイレクトさせるコード。
+app.get('/logout', function (req, res) {
+  req.logout();
+  res.redirect('/');
+});
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
