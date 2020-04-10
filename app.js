@@ -4,6 +4,36 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var helmet = require('helmet');
+var session = require('express-session');
+var passport = require('passport');
+var GitHubStrategy = require('passport-github2').Strategy;
+
+var GITHUB_CLIENT_ID = 'e52a6e108a6a8d6bead7';
+var GITHUB_CLIENT_SECRET = '1cb033e81777f37c32d578d2995241d317021b75';
+
+// ユーザーの情報をデータとして保存する処理をするコード
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+
+// 保存されたデータをユーザーの情報として読み出す際の処理を設定するコード
+passport.deserializeUser(function (obj, done) {
+  done(null, obj);
+});
+
+// passportモジュールに、GitHumを利用した認証の戦略オブジェクトを設定し、
+//  また認証後に実行する処理を、process.nextTick関数を利用して設定している。
+passport.use(new GitHubStrategy({
+  clientID: GITHUB_CLIENT_ID,
+  clientSecret: GITHUB_CLIENT_SECRET,
+  callbackURL: 'http://localhost:8000/auth/github/callback'
+},
+  function (accessToken, refreshToken, profile, done) {
+    process.nextTick(function () {
+      return done(null, profile);
+    });
+  }
+));
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
